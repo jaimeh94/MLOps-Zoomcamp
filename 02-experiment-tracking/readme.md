@@ -135,3 +135,112 @@ We can see the first run in the mlflow ui:
 
 # Experiment tracking with MLflow
 
+We going to see how to add parameter tuningto the notebook, how it looks in MLflow, select the one, and autolog to make log easier.
+
+For this we going to do a test with the xgboost library, also we'll use the hyperopt library (*Distributed Asynchronous Hyper-parameter Optimization*)
+
+We define the range of the parameters to iterate with hyperopt:
+
+```
+search_space = {
+    'max_depth': scope.int(hp.quniform('max_depth', 4, 100, 1)),
+    'learning_rate': hp.loguniform('learning_rate', -3, 0),
+    'reg_alpha': hp.loguniform('reg_alpha', -5, -1),
+    'reg_lambda': hp.loguniform('reg_lambda', -6, -1),
+    'min_child_weight': hp.loguniform('min_child_weight', -1, 3),
+    'objective': 'reg:linear',
+    'seed': 42
+}
+```
+
+The model og ML with tracking into a function:
+
+```
+def objective(params):
+    with mlflow.start_run():
+        mlflow.set_tag("model", "xgboost")
+        mlflow.log_params(params)
+        booster = xgb.train(
+            params=params,
+            dtrain=train,
+            num_boost_round=1000,
+            evals=[(valid, 'validation')],
+            early_stopping_rounds=50
+        )
+        y_pred = booster.predict(valid)
+        rmse = mean_squared_error(y_val, y_pred, squared=False)
+        mlflow.log_metric("rmse", rmse)
+
+    return {'loss': rmse, 'status': STATUS_OK}
+```
+
+And we excecute to do the iterations:
+
+```
+best_result = fmin(
+    fn=objective,
+    space=search_space,
+    algo=tpe.suggest,
+    max_evals=50,
+    trials=Trials()
+)
+```
+
+Now in the MLflow ui we have many runs:
+
+![Runs](./images/mlflow_runs_xgboost.png)
+
+Here we can compare it in the interface nad we see three  diferent graphics:
+
+* Parallel coodinates plot:
+
+![parallel](./images/mlflow_parallel.png)
+
+* Scatter plot
+
+![scatter](./images/mlflow_scatter.png)
+
+* Contour plot
+
+![contour](./images/mlflow_contour.png)
+
+## Select the best model
+To select the best model we just can sort by rmse in the mlflow interface.
+
+![sorted](./images/mlflow_sorted.png)
+
+Clicking in this we can see the parameters of that model.
+![best par](./images/best_params.png)
+
+Now we'll this parameters to train a model and see autolog
+
+## Autolog
+
+First we need to call it `mlflow.xgboost.autolog()`
+
+We get more params
+
+![auto params](./images/auto_params.png)
+
+![artifacst](./images/auto_artifacts.png)
+
+# Model management
+
+Machine Learnign Lifecycle
+
+![mlc](./images/mlc.png)
+
+to save our models with MLflow we need to use this line at the end of the run `mlflow.log_artifact(local_path='models/lin_reg.bin', artifact_path='models_pickle)`
+
+## Load models with mlflow
+
+We can load as we see in the ui:
+![load](./images/load.png)
+
+![log mod](./images/logg_models.png)
+
+
+Save the models with the mlflow format is very useful because is a standard
+![mlflow model](./images/mlflow_model_format.png)
+
+# Model Registry
