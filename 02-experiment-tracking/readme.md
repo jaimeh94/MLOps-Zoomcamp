@@ -210,6 +210,7 @@ To select the best model we just can sort by rmse in the mlflow interface.
 ![sorted](./images/mlflow_sorted.png)
 
 Clicking in this we can see the parameters of that model.
+
 ![best par](./images/best_params.png)
 
 Now we'll this parameters to train a model and see autolog
@@ -244,3 +245,13 @@ Save the models with the mlflow format is very useful because is a standard
 ![mlflow model](./images/mlflow_model_format.png)
 
 # Model Registry
+
+The model registry component is a centralized model store, set of APIs, and a UI, to collaboratively manage the full lifecycle of an MLflow Model.
+
+It provides:
+* Model lineage
+* Model versioning
+* stage transitions, and
+* Annotations
+
+To promote a model we look the time in training, the rmse and the model size in MB
